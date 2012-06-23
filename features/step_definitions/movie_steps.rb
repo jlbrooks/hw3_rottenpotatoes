@@ -20,7 +20,38 @@ end
 #  "When I check the following ratings: G"
 
 When /I (un)?check the following ratings: (.*)/ do |uncheck, rating_list|
-  # HINT: use String#split to split up the rating_list, then
-  #   iterate over the ratings and reuse the "When I check..." or
-  #   "When I uncheck..." steps in lines 89-95 of web_steps.rb
+  ratings = rating_list.split(", ")
+  if uncheck != "un"
+    ratings.each do |r|
+      puts r
+      step %Q{I check "ratings_#{r}"}
+    end
+  else
+    ratings.each do |r|
+      step %Q{I uncheck "ratings_#{r}"}
+    end
+  end
+end
+
+Then /I should only see movies with the following ratings: (.*)/ do |rating_list|
+  ratings = rating_list.split(", ")
+  puts ratings
+  showed_elements = page.all(:css, 'html body div#main table#movies tbody#movielist tr td[2]')
+  showed = []
+  showed_elements.each do |x|
+    showed << x.text
+  end
+  puts showed
+  showed.each do |r|
+    assert ratings.include?(r)
+  end
+end
+
+Then /I should see (all|none) of the movies/ do |count|
+  rows = page.all(:css, 'html body div#main table#movies tbody#movielist tr')
+  if count == "all"
+    rows.length.should == 10
+  elsif count == "none"
+    rows.length.should == 0
+  end
 end
